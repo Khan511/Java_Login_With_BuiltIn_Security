@@ -1,6 +1,6 @@
 package com.userSecurity.security.entity;
 
-import lombok.var;
+// import lombok.var;
 import lombok.Setter;
 import lombok.Getter;
 import jakarta.persistence.Id;
@@ -50,7 +50,6 @@ public abstract class Auditable {
     public void beforePersist() {
         // var userId = 0L;
         var userId = RequestContext.getUserId();
-        System.out.println("Auditable userID: ============================================>" + userId);
         if (userId == null) {
             throw new ApiException("Cannot persist entity without user ID in Request Context for this thread");
         }
@@ -64,7 +63,6 @@ public abstract class Auditable {
     public void beforeUpdate() {
         // var userId = 0L;
         var userId = RequestContext.getUserId();
-        System.out.println("UserID ==========================>" + userId);
         if (userId == null) {
             throw new ApiException("Cannot update entity without user ID in Request Context for this thread");
         }
