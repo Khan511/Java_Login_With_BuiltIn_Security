@@ -2,7 +2,11 @@ package com.userSecurity.security.security;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +25,7 @@ import com.userSecurity.security.service.UserService;
 
 import static com.userSecurity.security.constant.Constant.LOGIN_PATH;
 import static com.userSecurity.security.utils.RequestUtils.getResponse;
+import static com.userSecurity.security.utils.RequestUtils.handleErrorResponse;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.io.IOException;
@@ -31,6 +36,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.function.Consumer;
 
 // import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +54,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         setFilterProcessesUrl(LOGIN_PATH);
         this.userService = userService;
         this.jwtConfiguration = jwtConfiguration;
-
     }
 
     @Override
@@ -66,13 +71,21 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             return getAuthenticationManager().authenticate(authToken);
 
-        } catch (StreamReadException e) {
-            throw new RuntimeException(e);
-        } catch (DatabindException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception exception) {
+            handleErrorResponse(request, response, exception);
+
+            return null;
         }
+        // } catch (StreamReadException e) {
+        // throw new RuntimeException(e);
+        // } catch (DatabindException e) {
+        // throw new RuntimeException(e);
+        // } catch (IOException e) {
+        // throw new RuntimeException(e);
+        // } catch (BadCredentialsException e) {
+        // throw new ApiException("Invalid Password!");
+        // }
+
     }
 
     @Override
@@ -80,6 +93,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             Authentication authResult) throws StreamReadException, DatabindException, IOException {
 
         var userDetails = (UserDetails) authResult.getPrincipal();
+
+        // to check account states
+        try {
+            validAccount.accept(userDetails);
+        } catch (Exception e) {
+            handleErrorResponse(request, response, e);
+            return;
+        }
 
         userService.updateLoginAttempt(userDetails.getUsername(), LoginType.LOGIN_SUCCESS);
 
@@ -105,4 +126,25 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         return getResponse(request, Map.of("user", user), "Login Success", OK);
     }
+
+    // A consumer that validates the user's account status (e.g., locked, disabled,
+    // credentials expired, etc.).
+    private final Consumer<UserDetails> validAccount = userPrincipal -> {
+        // If the account is locked, throw a LockedException.
+        if (!userPrincipal.isAccountNonLocked()) {
+            throw new LockedException("Your account is currently locked. Please contact the administrator");
+        }
+        // If the account is disabled, throw a DisabledException.
+        if (!userPrincipal.isEnabled()) {
+            throw new DisabledException("Your account is currently disabled. Please contact the administrator");
+        }
+        // If the credentials have expired, throw a CredentialsExpiredException.
+        if (!userPrincipal.isCredentialsNonExpired()) {
+            throw new CredentialsExpiredException("Your password has expired. Please update your password");
+        }
+        // If the account has expired, throw a DisabledException.
+        if (!userPrincipal.isAccountNonExpired()) {
+            throw new AccountExpiredException("Your account has expired. Please contact the administrator");
+        }
+    };
 }

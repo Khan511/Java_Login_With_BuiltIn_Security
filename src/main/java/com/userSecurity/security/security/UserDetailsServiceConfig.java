@@ -38,8 +38,12 @@ public class UserDetailsServiceConfig {
             GrantedAuthority authority = new SimpleGrantedAuthority(userEntity.getRole().getName());
             List<GrantedAuthority> authorities = List.of(authority);
 
+            // return new
+            // org.springframework.security.core.userdetails.User(userEntity.getEmail(),
+            // credentialEntity.getPassword(), authorities);
             return new org.springframework.security.core.userdetails.User(userEntity.getEmail(),
-                    credentialEntity.getPassword(), authorities);
+                    credentialEntity.getPassword(), userEntity.isEnabled(), userEntity.isAccountNonExpired(),
+                    userEntity.isAccountNonExpired(), userEntity.isAccountNonLocked(), authorities);
         };
     }
 }

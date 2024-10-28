@@ -17,7 +17,4 @@ public class RequestContext {
     public static Long getUserId() {
         return USER_ID.get();
     }
-    // public static void clear() {
-    //     USER_ID.remove();
-    // }
 }

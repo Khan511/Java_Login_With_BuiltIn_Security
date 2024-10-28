@@ -4,6 +4,7 @@ import java.util.Map;
 import java.time.LocalDateTime;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +24,8 @@ import org.springframework.security.authentication.LockedException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.springframework.security.authentication.DisabledException;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+
+import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -44,8 +47,8 @@ public class RequestUtils {
 
             // Flush the output stream to ensure all data is sent to the client.
             outputStream.flush();
-
         } catch (Exception e) {
+
             // If an exception occurs, wrap it in a custom ApiException and rethrow it.
             throw new ApiException(e.getMessage());
         }
@@ -55,6 +58,7 @@ public class RequestUtils {
     // status code.
     // This is used to provide meaningful error messages in the response.
     private static final BiFunction<Exception, HttpStatus, String> errorReason = (exception, httpStatus) -> {
+
         // If the status is 403 Forbidden, return a specific permission error message.
         if (httpStatus.isSameCodeAs(FORBIDDEN)) {
             return "You do not have enough permission";
@@ -66,14 +70,16 @@ public class RequestUtils {
         // For specific exceptions related to authentication or API errors, return the
         // exception's message.
         if (exception instanceof DisabledException || exception instanceof LockedException
+                || exception instanceof AccountExpiredException
                 || exception instanceof BadCredentialsException || exception instanceof CredentialsExpiredException
+
                 || exception instanceof ApiException) {
             return exception.getMessage();
         }
         // If the status indicates a server error (5xx), return a generic server error
         // message.
         if (httpStatus.is5xxServerError()) {
-            return "An internal server error occurred";
+            return "An internal server error occurreddddd";
         } else {
             // For other cases, return a general error message.
             return "An error occurred. Please try again";
@@ -123,7 +129,9 @@ public class RequestUtils {
 
         } else if (exception instanceof DisabledException || exception instanceof LockedException
                 || exception instanceof BadCredentialsException || exception instanceof CredentialsExpiredException
+                || exception instanceof AccountExpiredException
                 || exception instanceof ApiException) {
+
             var apiResponse = getErrorResponse(request, response, exception, BAD_REQUEST);
             writeResponse.accept(response, apiResponse);
 

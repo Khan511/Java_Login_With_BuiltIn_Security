@@ -132,7 +132,7 @@ public class UserServiceImpl implements UserService {
 
     private ConfirmationEntity getUserConfirmation(String key) {
         return confirmationRepository.findByKey(key)
-                .orElseThrow(() -> new ApiException("Confirmation key not founddd"));
+                .orElseThrow(() -> new ApiException("Confirmation key not found"));
     }
 
     private ConfirmationEntity getUserConfirmation(UserEntity user) {

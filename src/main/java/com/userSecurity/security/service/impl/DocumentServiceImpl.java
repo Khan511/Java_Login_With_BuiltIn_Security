@@ -84,12 +84,12 @@ public class DocumentServiceImpl implements DocumentService {
                         .build();
 
                 var savedDocument = documentRepository.save(documentEntity);
-                // If file already exist chage the name of the new file
+                // // If file already exist chage the name of the new file
                 Path targetLocation = storage.resolve(fileName);
-                if (Files.exists(targetLocation)) {
-                    String newFileName = System.currentTimeMillis() + "_" + fileName;
-                    targetLocation = storage.resolve(newFileName);
-                }
+                // if (Files.exists(targetLocation)) {
+                // String newFileName = System.currentTimeMillis() + "_" + fileName;
+                // targetLocation = storage.resolve(newFileName);
+                // }
                 Files.copy(document.getInputStream(), targetLocation);
 
                 Document newDocument = fromDocumentEntity(savedDocument,
